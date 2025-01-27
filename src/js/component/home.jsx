@@ -60,7 +60,7 @@ const Home = () => {
 
 	const removeTodo = async (todoId) => {
 		try{
-			const response = await fetch("https://playground.4geeks.com/todo/todos/${todoId}", {
+			const response = await fetch(`https://playground.4geeks.com/todo/todos/${todoId}`, {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json"
