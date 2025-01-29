@@ -1,107 +1,112 @@
 import React, { useState, useEffect } from "react";
 
-
-
-//create your first component
 const Home = () => {
 	const [tasks, setTasks] = useState([]);
 	const [inputValue, setInputValue] = useState("");
-	const [loading, setLoading] = useState("true");
-	const [todos, setTodos] = useState([]);
-
+	const [loading, setLoading] = useState(true);
 
 	const loadTodos = async () => {
-		try{
+		try {
 			setLoading(true);
-			const response = await fetch("https://playground.4geeks.com/todo/users/javier")
-			console.log(response);
-			if(!response.ok) createUser();
+			const response = await fetch("https://playground.4geeks.com/todo/users/javier");
+			if (!response.ok) {
+				await createUser();
+				return;
+			}
 			const fetchData = await response.json();
-			console.log(fetchData);
 			setTasks(fetchData.todos);
 			setLoading(false);
-		} catch(error){
+		} catch (error) {
 			console.log("Algo fue mal " + error);
+			setLoading(false);
 		}
-	}
+	};
+
 	const createUser = async () => {
-		try{
+		try {
 			const response = await fetch("https://playground.4geeks.com/todo/users/javier", {
 				method: "POST"
-			})
-			console.log(response);
-		} catch (error){
-			console.log("Algo fue mal "+ error);
+			});
+			if (!response.ok) throw new Error("HTTP error " + response.statusText);
+			await loadTodos();
+		} catch (error) {
+			console.log("Algo fue mal " + error);
 		}
-	}
+	};
 
 	const addTodo = async (todo) => {
-		try{
+		try {
 			const newTodo = {
 				label: todo,
 				done: false,
-			}
+			};
 
-			const response = await fetch("https://playground.4geeks.com/todo/users/javier", {
+			const response = await fetch("https://playground.4geeks.com/todo/todos/javier", {
 				method: "POST",
 				body: JSON.stringify(newTodo),
 				headers: {
 					"Content-Type": "application/json"
 				}
-			})
-			console.log(response);
-			if(!response.ok) throw new Error("HTTP error "+ response.statusText);
+			});
+			if (!response.ok) throw new Error("HTTP error " + response.statusText);
 
-			loadTodos();
-		} catch(error){
+			await loadTodos();
+		} catch (error) {
 			console.log(error);
 		}
-	}
+	};
 
 	const removeTodo = async (todoId) => {
-		try{
+		try {
 			const response = await fetch(`https://playground.4geeks.com/todo/todos/${todoId}`, {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json"
 				}
-			})
+			});
 
-			if(!response.ok) throw new Error("HTTP error "+ response.statusText)
-		} catch (error){
-	console.log(error);
-	}
-	}
+			if (!response.ok) throw new Error("HTTP error " + response.statusText);
+			await loadTodos();
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	useEffect(() => {
 		loadTodos();
-	}, [])
+	}, []);
+
+	const handleKeyDown = (e) => {
+		if (e.key === 'Enter' && inputValue.trim() !== "") {
+			addTodo(inputValue);
+			setInputValue("");
+		}
+	};
 
 	return (
-		<div classname="container">
+		<div className="container">
 			<h1>Todos</h1>
 			<ul>
-				<li><input 
-				        type="text"
-				        onChange={(e) => setInputValue(e.target.value)} 
-						value={inputValue} 
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-							  setTodos([...todos, inputValue]);
-							  setInputValue("");
-							}}}
-						placeholder="What needs to be done?">
-					</input>
+				<li>
+					<input
+						type="text"
+						onChange={(e) => setInputValue(e.target.value)}
+						value={inputValue}
+						onKeyDown={handleKeyDown}
+						placeholder="What needs to be done?"
+					/>
 				</li>
-				{todos.map((tarea, index) => (
-					<li key={index} >
-						{/*Filtro de todos los index menos el que se hace click */}
-						{tarea} <button onClick={() => setTodos(todos.filter((t, currentIndex) => index != currentIndex ))}>Eliminar</button>
-					</li>
-				))}
-
+				{loading ? (
+					<li>Loading...</li>
+				) : (
+					tasks.map((task) => (
+						<li key={task.id}>
+							{task.label} <button onClick={() => removeTodo(task.id)}>Eliminar</button>
+						</li>
+					))
+				)}
 			</ul>
-			<div>{todos.length} item left</div>
+			<div>{tasks.length} item left</div>
 		</div>
 	);
 };
